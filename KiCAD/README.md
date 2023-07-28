@@ -1,4 +1,4 @@
-M302-solar-radiation 日射量観測ノード
+M302-HX711eva HX711評価ボード
 ======================================================
 
 # 概要
@@ -11,15 +11,11 @@ Arduino UNOのシールドとして UECS で農業環境計測で使用しやす
 
 # Interface仕様
 
- ADCはSX8725Cを用いる。  
- single-endでVref=1.22V
- AC2が正、AC3がGND
- D0 => A0
- D1 => A1
- READY => A2
+ ADCはHX711を用いる  
+ ハーフブリッジを用いる
 
 
 # プログラム
 
-''git@github.com:mhorimoto/M302-solar-radiation.git''
+''git@github.com:mhorimoto/M302-HX711.git''
 

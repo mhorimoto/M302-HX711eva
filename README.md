@@ -1,17 +1,13 @@
-# M302を用いた日射量計
+# M302を用いたHX711評価システム
 
 * Arduino UNO
 * M302K
-* MSX8725C(marutsu)のSX8725C(A/D Converter)
-* 日射計 SOLOR MINI "PCM-01N"
+* HX711
+* ハーフブリッジのロードセル
 
-を用いた日射量観測ノード
+を用いた重量秤のプログラム
 
 ## Directories
-
-### test
-
-MSX8725を使用するテストプログラムを収めておく。
 
 ### main
 
