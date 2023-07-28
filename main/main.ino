@@ -19,6 +19,9 @@
 #include <Adafruit_I2CDevice.h>
 #include <Adafruit_I2CRegister.h>
 #include "Adafruit_SHT31.h"
+#include "HX711.h"
+
+
 
 uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
 void get_mcusr(void)     \
@@ -37,7 +40,11 @@ void get_mcusr(void) {
 #define  pRADIATION  0xa0
 #define  delayMillis 5000UL // 5sec
 
-const char VERSION[16] PROGMEM = "M302-HX711eva 01";
+// HX711 circuit wiring
+#define LOADCELL_DOUT_PIN  6
+#define LOADCELL_SCK_PIN   7
+
+const char VERSION[16] PROGMEM = "M302-HX711eva06";
 
 char uecsid[6], uecstext[180],strIP[16],linebuf[80];
 byte lineptr = 0;
@@ -46,6 +53,8 @@ bool      ready,busy;
 uint8_t  regs[14];
 
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
+HX711 scale;
+
 
 /////////////////////////////////////
 // Hardware Define
@@ -106,6 +115,8 @@ void setup(void) {
   }
   sht31.heater(false);
 
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+
   wdt_reset();
   cndVal |= 0x00000001;  // Setup completed
   delay(1000);
@@ -132,12 +143,15 @@ extern void dumpLowCore(void);
 //char *ids = "%s:%02X%02X%02X%02X%02X%02X";
 
 int dk=0;
+
 void lcd_display_loop(void) {
   dk++;
   switch(dk) {
   case 3:
+    lcdout(0,2,1);
     break;
   case 4:
+    lcdout(0,3,1);
     break;
   case 5:
     dk = 0;
@@ -271,10 +285,12 @@ void UserEverySecond(void) {
 void UserEvery10Seconds(void) {
   extern void lcdout(int,int,int);
   char *xmlDT PROGMEM = CCMFMT;
-  char name[10],dtxt[17],val[6];
+  char name[10],dtxt[17],tval[11],hval[4];
   int ia,cdsv,l,ti,tc;
+  long  w = scale.read_average(10);
   float t = sht31.readTemperature();
   float h = sht31.readHumidity();
+
   ti = (int)t;
   tc = (int)((float)(t-ti)*100.0);
   
@@ -283,9 +299,16 @@ void UserEvery10Seconds(void) {
   } else { 
     Serial.println("Failed to read temperature");
   }
-  sprintf(dtxt,"%d.%02dC/%d%%",ti,tc,(int)h);
+  sprintf(tval,"%d.%02d",ti,tc);
+  uecsSendData(1,xmlDT,tval,0); // InAirTemp
+  sprintf(hval,"%d",(int)h);
+  uecsSendData(2,xmlDT,hval,0); // InAirHumid
+  sprintf(lcdtext[2],"%sC/%s%%",tval,hval);
+  ltoa(w,tval,10);
+  uecsSendData(3,xmlDT,tval,0); // Weight
+  sprintf(lcdtext[3],"W=%s ",tval);
   lcd.setCursor(0,1);
-  lcd.print(dtxt);
+  lcd.print(lcdtext[2]);
   wdt_reset();
 }
 
@@ -293,3 +316,4 @@ void UserEveryMinute(void) {
   static byte a=0 ;
   char *xmlDT PROGMEM = CCMFMT;
 }
+
